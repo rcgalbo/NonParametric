@@ -1,0 +1,177 @@
+---
+title: "Home Work 2"
+author: "Rick Galbo, Lost in Bayesian: Ergo not a nonparam overachiever"
+date: "February 12, 2016"
+output: pdf_document
+---
+
+## Problem 1
+
+```{r, echo=FALSE}
+library(plyr)
+library(ggplot2)
+
+#load in data
+group1 = c(2.9736,0.9448,1.6394,0.0389,1.2958)
+group2 = c(0.7681,0.8027,0.2156,0.0740,1.5076)
+group3 = c(4.8249,2.2516,1.5609,2.0452,1.0959)
+
+group = rep(1:3, c(5,5,5))
+Y = c(group1,group2,group3)
+
+dat = data.frame(Y,group)
+ddply(dat,~group,summarise,mean=mean(Y))
+qplot(factor(group), Y, data = dat, geom = "boxplot",fill = factor(group),xlab = 'Group')
+```
+
+
+There is an observable difference in the group means which will be tested for significance.
+
+###a) ANOVA _F_-Test
+
+H0: mu1 = mu2 = mu3 vs H1: mui != muj for some i,j
+
+```{r,echo=FALSE}
+fit = lm(Y ~ group, dat)
+anv = anova(fit)
+fval = anv[1,4]
+pval = anv[1,5]
+anv
+```
+
+Can see that this is not significant at the _a_ = 0.05 significance level. 
+
+###b) permutation _F_-test
+
+H0 : t1 = t2 = ... = tk = 0   
+H1 : t1,t2, ..., tk notallequal0
+
+p-value:
+
+```{r,echo=FALSE}
+n = length(dat$Y)
+#+++++++++++++++++++
+#change back to 10000
+nsim = 1000
+#+++++++++++++++++++
+emptyFstatVec = rep(NA,nsim)
+for (i in 1:nsim){
+  datPermute = dat
+  datPermute$Y = dat$Y[sample(1:n,n)]
+  lmOut = lm(Y~group,data=datPermute)
+  anovaOut = anova(lmOut)
+  emptyFstatVec[i] = anovaOut[1,4]
+}
+#variable cleanup
+FstatVec = emptyFstatVec
+permPval = sum(fval<FstatVec)/length(FstatVec)
+permPval
+
+#histogram with fval
+p = qplot(FstatVec, geom="histogram",bins = 50,fill=I("grey"), col=I("blue"),
+          xlab = 'F-Values',main = 'F-distribution') 
+p + geom_vline(xintercept = fval, col=I("RED"),linetype = 'longdash')
+```
+
+This p-value is comparable to the ANOVA F-test value and is also non-significant.
+
+###c) Kruskal-Wallis Test
+
+p-value:
+
+```{r, echo=FALSE}
+#kruskal wallis test
+#create rank colun
+dat$ranks = rank(dat$Y)
+Rbar = tapply(dat$ranks, dat$group, mean)
+n<-tapply(dat$ranks,dat$group,length)
+N = length(dat$ranks)
+#calculate kwStat
+kwStat = 12/(N*(N+1))*sum(n*(Rbar-(N+1)/2)^2)
+
+#permutation test with kwstat
+n = tapply(dat$ranks,dat$group,length)
+N = length(dat$ranks)
+nsim = 10000
+kwVec = rep(NA,nsim)
+for (i in 1:nsim){
+  datPermuteKru = dat
+  datPermuteKru$ranks = dat$ranks[sample(1:N,N)]
+  Rbar = tapply(datPermuteKru$ranks,datPermuteKru$group,mean)
+  kwVec[i] = 12/(N*(N+1))*sum(n*(Rbar-(N+1)/2)^2)
+}
+pvalKW = sum(kwStat<kwVec)/nsim
+#permutation p-value
+pvalKW
+
+kruskal.test(Y,group,data=dat)
+#right on the edge of significance
+
+p = qplot(kwVec, geom="histogram",bins = 50,fill=I("grey"), col=I("blue"),
+          xlab = 'Kruskal-Wallis Statistic',main = 'Kruskal-Wallis Permutation Distribution') 
+p + geom_vline(xintercept = kwStat, col=I("RED"),linetype = 'longdash')
+```
+
+### d)
+
+We can see that for all the test performed that the p-value was never significant at the alpha = 0.05 level except for the Kruskal-Wallis when done by hand. However, this was only slightly significant and very close to the programmed version of the test. The Kruskal-Wallis test was the most significant and did the best at detecting the difference in the groups because it is a rank based test and was able to perform more accurately on a small sample with outliers. The nature of the F-test allows for skew due to outliers.
+
+\newpage
+
+## Probem 2
+
+After loading the data set, run a Kruskal-Wallis test to identify if there are differences between the ranked values belonging to each group.
+
+```{r,echo=FALSE}
+#Problem 2
+#read data
+dat2 = read.csv('http://bit.ly/Zg51IA')
+#boxplot
+qplot(factor(group), score, data = dat2, geom = "boxplot",fill = factor(group))
+#kruskal-wallis
+kruskal.test(dat2$score,dat2$group)
+```
+
+The p-value from the Kruskal-Wallis test is very small, p = 3.116e-05. Since we have five groups preforming 10 different tests, which will create false positives by chance. To correct for this we reduce the significance level using the Bonferroni cut-off. This reduces the alpha level to match the number of test preformed. It is what is considered a conservative correction.
+
+```{r,echo=FALSE}
+k = 5.0
+alpha = 0.05
+#cut-off
+
+alpha/ (k*(k-1)/2)
+       
+```
+
+We can see that even though we have made a conservative correction of alpha that the test statistic is still significant.
+
+## Problem 3
+
+```{r, echo = FALSE}
+#problem 3
+#Here is the Data
+site1<-c(46,28,46,37,32,41,42,45,38,44)
+site2<-c(42,60,32,42,45,58,27,51,42,52)
+site3<-c(38,33,26,25,28,28,26,27,27,27)
+site4<-c(31,30,27,29,30,25,25,24,27,30)
+
+groups = rep(1:4, c(10,10,10,10))
+sites = c(site1,site2,site3,site4)
+#create data
+dat3 = data.frame(sites,groups)
+#boxplot
+qplot(factor(groups), sites, data = dat3, geom = "boxplot",fill = factor(groups))
+#kruskal wallis
+kruskal.test(sites,groups,data=dat3)
+```
+
+Here the data is loaded and plotted to show the difference between the groups. A Kruskal-Wallis test is preformed to see if the ranks between any of the groups are significantly different. This test produced a p-value of 4.335e-05 which is significant at the 0.05 level. However, since there are 4 groups it is good to check the Bonferroni cut-off on alpha.
+
+```{r,echo=FALSE}
+k=4
+alpha=0.05
+#cut-off
+alpha/(k*(k-1)/2)
+```
+
+The test p-value is still significant after this conservative correction.

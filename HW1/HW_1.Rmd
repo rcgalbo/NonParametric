@@ -1,0 +1,146 @@
+---
+title: "Homework1"
+author: 'Rick Galbo, Bills Fan, Not #BillsMafia member'
+date: "January 24, 2016"
+output: pdf_document
+---
+
+####Problem 1
+
+
+  a) Upon initial inspection, we see that the median test score is 77 which is much higher than the previous median of 70.
+
+```{r}
+testScores <- c(79,74,88,80,80,66,65,86,84,80,78,72,71,74,86,96,77,
+                81,76,80,76,75,78,87,87,74,85,84,76,77,76,74,85,74,76,
+                77,76,74,81,76)
+
+testScores_med <- median(testScores)
+
+#summarize data
+summary(testScores)
+
+```
+
+  b) The null and alternative hypothesis at alpha level equal to 0.05 for single sided binomial test.   
+**Ho:** median = 70   
+**Ha:** median > 70
+
+```{r}
+diff <- testScores - 70
+table(sign(diff))
+
+#by hand
+1 - pbinom(37,40,0.5)
+
+#using binomial function
+binom.test(38, 40, alternative = 'greater')
+```
+
+  c) The binomial hypothesis test done here both "by hand" and using the binomial test function
+
+  d) We can see that both p-values agree with the value 7.466952e-10. Both support the rejection of the null hypothesis at the $a = 0.05$ level meaning there is evidence the median actually did increase.
+
+####Problem 2
+
+  >Start by creating a data frame with a numerical score variable and a treatment categorical variable. Then use the `tapply` function to calculate the medians of the different groups and see they're different.
+
+```{r}
+dat <- data.frame(score = c(3,4,6,3,1,2,1,1), 
+                  treatment = c(rep('T1',4),rep('T2',4)))
+
+scoreMean <- tapply(dat$scor, dat$treatment, mean)
+scoreMean
+
+obsDiffMean<-diff(scoreMean)
+```
+
+  >To compute a _p_-value to check if the groups are significantly different, using the perm library's function `permTS` to check if the median values of all possible permutations of the labeling are the same.
+
+```{r}
+#by hand permutation test
+library(gtools)
+perms<-combinations(8,4)
+dim(perms)
+
+permDiffs<-rep(NA,dim(perms)[1])
+
+for (i in 1:dim(perms)[1]){
+  scoresTemp<-c(dat$score[perms[i,]],dat$score[setdiff(c(1:8),perms[i,])] )
+  datPermuted<-data.frame(score=scoresTemp,treatment=dat$treatment)
+  permDiffs[i]<-diff(tapply(datPermuted$score,datPermuted$treatment,mean))
+}
+sort(permDiffs)
+
+#calc p-val
+sum(permDiffs<=obsDiffMean)/length(permDiffs)
+
+#prepackaged permutation test
+library(perm)
+permTS(dat$score~dat$treatment, alternative='greater',exact=TRUE)
+```
+
+  >Can see from the small _p_-values that this test is significant but the _p_-value for this specific situation doesn't require a sample data set or any computation to find. 
+  >If the groups are perfectly separated by the size of their elements, meaning that all elements in group one are larger than all elements in group two, this creates a maximal condition. All other permutations of the data will not produce as extreme of a result. The one sided _p_-value of this occurring:
+  
+  $$\frac{1}{{\# of observations \choose group size}}$$
+
+###Problem 3
+
+```{r}
+siblings<-data.frame(hometown=c(rep("rural",24),rep("urban",17)),
+                     siblings=c(3,2,1,1,2,1,3,2,2,2,2,5,1,4,1,1,1,1,6,2,2,
+                                2,1,1,1,0,1,1,0,0,1,1,1,8,1,1,1,0,1,1,2))
+
+#Wilcoxon Rank Sum
+siblings$rank<-rank(siblings$siblings)
+W1<-sum(siblings$rank[siblings$hometown=='rural'])
+W1
+
+set.seed(1234)
+nsims<-10000
+rankSumPerms<-rep(NA,nsims)
+
+for (i in 1:nsims){
+  rankSumPerms[i]<- sum(sample(1:41,24,replace=FALSE))
+}
+
+#pvalue
+sum(rankSumPerms>=W1)/nsims
+```
+
+a) Checking for difference between groups:   
+**Ho:** The sums of the ranks between rural and urban areas is the same.    
+**Ha:** The sums of the ranks between rural and urban areas is not the same.   
+Here we can see that the _p_-value of 0.0014 is significant at $a = 0.05$ level which allows us to reject the null hypothesis.
+
+b) It would not be efficient to attempt a complete permutation test because the number of possible permutations on the data are ${41 \choose 24} = 151,584,480,450$. Instead it is acceptable to do a simulation for this test.
+
+###Problem 4
+
+>Create a data set with two groups of similar values and one that has a large outlier.
+
+```{r}
+prob4 <- data.frame(group=c(rep('uno',4),rep('dos',4)),value=c(1:7,45))
+
+wilcox.test(value~group,data = prob4)
+t.test(value~group, data=prob4)
+```
+
+>Can see that the outlier in the data set threw off the two sample t-test while the Wilcoxon rank-test still had significance.
+
+###Problem 5
+
+```{r}
+#Treatment 1 data
+trt1 <- c(21.9,20.2,19.4,20.3,19.6,20.4,18.4,20.1,22.0,18.9)
+#Treatment 2 data
+trt2 <- c(20.2,13.8,21.8,19.2,19.6,25.5,17.0,17.6,19.5,22.2)
+
+ansari.test(trt1,trt2)
+```
+
+>**Ho:** The variance of the two samples is the same.  
+>**Ha:** The sample variance is not the same.
+
+>This test doesn't reject the null hypothesis at the standard alpha level.

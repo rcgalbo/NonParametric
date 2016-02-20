@@ -1,0 +1,5 @@
+unnamed-chunk-1	c	median	summary
+unnamed-chunk-2	binom.test	pbinom	sign	table	testScores
+unnamed-chunk-3	$	c	data.frame	diff	mean	rep	tapply
+unnamed-chunk-4	$	[<-	~	<=	c	combinations	dat	data.frame	diff	dim	for	length	library	mean	obsDiffMean	permTS	rep	setdiff	sort	sum	tapply
+unnamed-chunk-5	$	$<-	[<-	==	>=	c	data.frame	for	rank	rep	sample	set.seed	sum
