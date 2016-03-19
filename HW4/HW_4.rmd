@@ -1,8 +1,15 @@
-#Nonparametric
-#author: rgalbo
-# homewor 4
+---
+title: "Home Work 4"
+author: "Rick Glabo, more functions"
+date: "March 19, 2016"
+output: pdf_document
+---
 
-#1
+## Problem 1
+
+Using the provided matrix of freethrows and McNemar's test, will check if the probability of making the first freethrow is the same as making the second.
+
+```{r}
 #load data
 mat<-matrix(c(4,5,14,7),ncol=2)
 rownames(mat)<-c("Made First","Missed First")
@@ -22,8 +29,13 @@ mcnemar.test(mat,correct=TRUE)
 
 #can see that there is no significant difference 
 #seen from using the McNemar test at alpha = 0.5 level
+```
 
-#2
+##Problem 2
+
+Create a function to perform bootstrapping techniques on the rabbit blood data
+
+```{r}
 #load data
 rabbits<-c(55,140,91,122,111,185,203,101,
               76,145,95,101,196,45,299,226,
@@ -81,9 +93,14 @@ boots = function(data, nsims){
 }
 
 boots(rabbits, 10000)
+```
 
-#problem 3
 
+## Problem 3
+
+Simulation study of normal data of size n = 15, mean = 5, variance of 36
+
+```{r}
 #generate data
 normdat = rnorm(15,6,36)
 #calculate sample mean
@@ -92,5 +109,5 @@ mu = mean(normdat)
 v = var(normdat)
 
 boots(normdat,1000)
-
+```
 
