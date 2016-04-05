@@ -54,22 +54,29 @@ boots = function(data, nsims){
   bias = e_hat - theta_hat
   
   #bootstrap var
-  var_boot = sum((boot_thetas - e_hat)^2)/nsims
+  var_boot = var(boot_thetas)
   
   #calculate confidence intervals
   xbar = mean(data)
   s = sd(data)
-  tint =  c(xbar-qt(0.975,n-1)*s/sqrt(n),xbar+qt(0.975,n-1)*s/sqrt(n))
+  T_dist =  c(xbar-qt(0.975,n-1)*s/sqrt(n),xbar+qt(0.975,n-1)*s/sqrt(n))
   
   confidence_boot = function(data){
     n = length(data)
     new = sample(data,n,replace = TRUE)
-    tboot = mean((new-xbar)/sd(new)/sqrt(n))
+    mu_i = mean(new)
+    s_i = sd(new)
+    tboot = (mu_i-xbar)/s_i/sqrt(n)
     return(tboot)
   }
   
   tboots = replicate(nsims,confidence_boot(data))
   tq = quantile(tboots,c(0.025,0.975))
+  
+  
+  ##bias corrected confidence intervals lookup
+  #bootstrap confidence interval??
+  
   #calculate bootstrap interval
   cint = c(xbar-tq[2]*s/sqrt(n),xbar-tq[1]*s/sqrt(n))
   
@@ -92,5 +99,3 @@ mu = mean(normdat)
 v = var(normdat)
 
 boots(normdat,1000)
-
-
