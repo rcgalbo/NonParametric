@@ -1,5 +1,0 @@
-unnamed-chunk-1	testScores	testScores_med
-unnamed-chunk-2	diff
-unnamed-chunk-3	dat	obsDiffMean	scoreMean
-unnamed-chunk-4	datPermuted	i	permDiffs	perms	scoresTemp
-unnamed-chunk-5	i	nsims	rankSumPerms	siblings	W1
